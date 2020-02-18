@@ -13,6 +13,179 @@ public class Solution {
 
     }
 
+    /**
+     * 后序遍历非递归
+     */
+    public List<Integer> postorderTraversal(TreeNode root) {
+        Stack<TreeNode> stack = new Stack();
+        List<Integer> list = new ArrayList();
+        if(root == null){
+            return list;
+        }
+        TreeNode last = null; // 被完整遍历过的节点
+        TreeNode cur = root;
+        while(!stack.empty() || cur != null){
+            while(cur != null){
+                stack.push(cur);
+                cur = cur.left;
+            }
+            // cur的左孩子为空了，后序遍历结果便是 null 右 根
+            // 此时右节点有三种情况：
+            //  1: 右孩子为空，则当前结点出栈，即已被完整遍历过了
+            //  2：右孩子不为空，但是也已经被遍历过了，处理同上
+            //  3：右孩子不为空，且没被遍历过，则cur = cur.right
+            TreeNode top = stack.peek();
+            if(top.right == null){
+                list.add(top.val);
+                last = top;
+                stack.pop();
+
+            }else if(top.right == last){
+                list.add(top.val);
+                last = top;
+                stack.pop();
+            }else{
+                cur = top.right;
+            }
+        }
+        return list;
+    }
+
+    /**
+     * 中序遍历非递归
+     */
+    public List<Integer> inorderTraversal(TreeNode root) {
+        List<Integer> list = new ArrayList();
+        Stack<TreeNode> stack = new Stack();
+        TreeNode cur = root;
+        if(root == null){
+            return list;
+        }
+        while(!stack.empty() || cur != null){
+            while(cur != null){
+                stack.push(cur);
+                cur = cur.left;
+            }
+            TreeNode top = stack.pop();
+            list.add(top.val);
+            cur = top.right;
+        }
+        return list;
+    }
+
+
+    /**
+     * 前序遍历非递归：循环+栈
+     */
+    public List<Integer> preorderTraversal(TreeNode root) {
+        List<Integer> list = new ArrayList();
+        if(root == null){
+            return list;
+        }
+        Stack<TreeNode> stack = new Stack();
+        TreeNode cur = root;
+        while(cur != null || !stack.empty()){
+            while(cur != null){
+                list.add(cur.val);
+                stack.push(cur);
+                cur = cur.left;
+            }
+            TreeNode top = stack.pop();
+            cur = top.right;
+        }
+        return list;
+    }
+
+    /**
+     * 前序中序构造二叉树
+     */
+    public TreeNode buildTree(int[] preorder, int[] inorder) {
+        if(preorder == null || preorder.length == 0){
+            return null;
+        }
+        TreeNode root = new TreeNode(preorder[0]);
+        int i = 0;
+        for( ; i < inorder.length; i++){
+            if(inorder[i] == preorder[0]){
+                break;
+            }
+        }
+        int[] leftPre = Arrays.copyOfRange(preorder, 1, i+1);
+        int[] leftIn = Arrays.copyOfRange(inorder, 0, i);
+        int[] rightPre = Arrays.copyOfRange(preorder, 1+leftPre.length, preorder.length);
+        int[] rightIn = Arrays.copyOfRange(inorder, 1+leftPre.length, preorder.length);
+        root.left = buildTree(leftPre, leftIn);
+        root.right = buildTree(rightPre, rightIn);
+        return root;
+    }
+
+    /**
+     * 最近公共祖先
+     */
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        // 如果p，q中有一个是根节点
+        if(p == root || q == root){
+            return root;
+        }
+        boolean pInLeft = find(root.left, p);
+        boolean qInLeft = find(root.left, q);
+        // p，q在同一个子树上
+        if(pInLeft && qInLeft){
+            return lowestCommonAncestor(root.left, p, q);
+        }
+        if(!pInLeft && !qInLeft){
+            return lowestCommonAncestor(root.right, p, q);
+        }
+        // 如果p，q在两棵不同的子树上，则返回root
+        return root;
+    }
+    public boolean find(TreeNode root, TreeNode p){
+        if(root == null){
+            return false;
+        }
+        if(root == p){
+            return true;
+        }
+        if(find(root.left, p)){
+            return true;
+        }
+        return find(root.right, p);
+    }
+
+    /**
+     * 二叉搜索树转为有序链表
+     *  分为两步，第一步是把每一个节点转换成双向链表
+     *      为了保证有序，我们对二叉搜索树进行中序遍历，保证我们拿出节点的时候是有序的
+     *      接下来就只需要把这些有序的节点转成双向链表即可
+     *
+     */
+    TreeNode pre = null;
+    TreeNode head = null;  // 返回值
+    public TreeNode Convert(TreeNode pRootOfTree) {
+        pre = null;
+        head = null;
+        inOrder(pRootOfTree);
+        return head;
+    }
+    // 中序，因为要保证有序
+    public void inOrder(TreeNode root){
+        if(root != null){
+            inOrder(root.left);
+            buildList(root);
+            inOrder(root.right);
+        }
+    }
+    // 构建排序双向链表
+    public void buildList(TreeNode cur){
+        cur.left = pre;
+        if(pre != null){
+            pre.right = cur;
+        }else{
+            head = cur;
+        }
+        pre = cur;
+    }
+
 
     /**
      * 二叉树的层序遍历
